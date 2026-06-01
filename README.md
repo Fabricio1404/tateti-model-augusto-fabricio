@@ -7,15 +7,15 @@ Juego de Ta-Te-Ti en el navegador donde un humano juega contra una red neuronal 
 ## Archivos del proyecto
 
 ```
-📁 proyecto/
-├── tateti_game.html          ← Juego principal (este archivo)
-├── README.md                 ← Esta documentación
-└── 📁 model/
-    ├── ttt_model.json        ← Arquitectura de la red neuronal
-    └── ttt_model.weights.bin ← Pesos entrenados del modelo
+📁 simple-ttt-model/
+├── 📁 model/
+│   ├── ttt_model.json        ← Arquitectura de la red neuronal
+│   └── ttt_model.weights.bin ← Pesos entrenados del modelo
+├── index.html                ← Juego principal
+├── style.css                 ← Estilos separados del HTML
+├── ttt_states.jpg            ← Imagen de referencia de estados del tablero
+└── README.md                 ← Esta documentación
 ```
-
-> **Importante:** el archivo de pesos se llama `ttt_model_weights.bin` originalmente. Renombralo a `ttt_model.weights.bin` antes de colocarlo en la carpeta `/model/`.
 
 ---
 
@@ -28,7 +28,7 @@ No se puede abrir el HTML con doble-click porque el navegador bloquea la carga d
 # Desde la carpeta del proyecto:
 python -m http.server 8000
 ```
-Luego abrí en el navegador: `http://localhost:8000/tateti_game.html`
+Luego abrí en el navegador: `http://localhost:8000/index.html`
 
 **Opción 2 — VS Code:**
 Instalá la extensión *Live Server* y hacé click derecho sobre el HTML → *Open with Live Server*.
