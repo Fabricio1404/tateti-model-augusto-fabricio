@@ -21,17 +21,13 @@ Juego de Ta-Te-Ti en el navegador donde un humano juega contra una red neuronal 
 
 ## Cómo ejecutar
 
-No se puede abrir el HTML con doble-click porque el navegador bloquea la carga de archivos locales por seguridad. Hay que usar un servidor local:
+El proyecto se ejecuta a través de un servidor local. No se puede abrir el HTML con doble-click porque el navegador bloquea la carga de archivos externos (como el modelo) por seguridad.
 
-**Opción 1 — Python (recomendado, ya viene instalado):**
-```bash
-# Desde la carpeta del proyecto:
-python -m http.server 8000
-```
-Luego abrí en el navegador: `http://localhost:8000/index.html`
-
-**Opción 2 — VS Code:**
-Instalá la extensión *Live Server* y hacé click derecho sobre el HTML → *Open with Live Server*.
+**Método usado — XAMPP:**
+1. Instalá [XAMPP](https://www.apachefriends.org/)
+2. Copiá la carpeta `simple-ttt-model` dentro de `C:\xampp\htdocs\`
+3. Iniciá el servidor Apache desde el panel de control de XAMPP
+4. Abrí en el navegador: `http://localhost/simple-ttt-model/index.html`
 
 ---
 
