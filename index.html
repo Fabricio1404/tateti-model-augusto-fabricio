@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ta-Te-Ti · Agente NN</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Ta-Te-Ti · Agente NN</h1>
+    <p class="subtitle">Vos jugás como <strong>X</strong> · La máquina juega como <strong>O</strong> · TensorFlow.js</p>
+  </header>
+
+  <div class="scores">
+    <div class="score-card">
+      <div class="score-label">Tus victorias</div>
+      <div class="score-val purple" id="score-human">0</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Empates</div>
+      <div class="score-val" id="score-draw">0</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Victorias IA</div>
+      <div class="score-val teal" id="score-ai">0</div>
+    </div>
+  </div>
+
+  <div class="mode-row">
+    <span>Dificultad:</span>
+    <button class="toggle-opt active" id="mode-nn"   onclick="setMode('nn')">Red Neuronal</button>
+    <button class="toggle-opt"        id="mode-rand" onclick="setMode('random')">Aleatoria</button>
+    <button class="toggle-opt"        id="mode-debug" onclick="toggleDebug()">Ver probs</button>
+  </div>
+
+  <div class="status-bar">
+    <div class="sdot" id="sdot"></div>
+    <span id="status-text">Cargando modelo...</span>
+  </div>
+
+  <div class="board" id="board">
+    <div class="cell" data-i="0" onclick="humanMove(0)"></div>
+    <div class="cell" data-i="1" onclick="humanMove(1)"></div>
+    <div class="cell" data-i="2" onclick="humanMove(2)"></div>
+    <div class="cell" data-i="3" onclick="humanMove(3)"></div>
+    <div class="cell" data-i="4" onclick="humanMove(4)"></div>
+    <div class="cell" data-i="5" onclick="humanMove(5)"></div>
+    <div class="cell" data-i="6" onclick="humanMove(6)"></div>
+    <div class="cell" data-i="7" onclick="humanMove(7)"></div>
+    <div class="cell" data-i="8" onclick="humanMove(8)"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-primary" onclick="resetGame()">Nueva partida</button>
+    <button class="btn" onclick="aiFirst()">IA empieza primero</button>
+  </div>
+
+  <div class="model-status">
+    <div class="mdot" id="mdot"></div>
+    <span id="model-label">Cargando modelo TensorFlow.js...</span>
+  </div>
+
+  <!-- Panel de probabilidades (debug) -->
+  <div id="prob-debug">
+    <div class="prob-title">Probabilidades de la red (último movimiento IA)</div>
+    <div class="prob-grid" id="prob-grid">
+      <div class="prob-cell" id="p0">-</div>
+      <div class="prob-cell" id="p1">-</div>
+      <div class="prob-cell" id="p2">-</div>
+      <div class="prob-cell" id="p3">-</div>
+      <div class="prob-cell" id="p4">-</div>
+      <div class="prob-cell" id="p5">-</div>
+      <div class="prob-cell" id="p6">-</div>
+      <div class="prob-cell" id="p7">-</div>
+      <div class="prob-cell" id="p8">-</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── Estado ──────────────────────────────────────────────
+  let model = null;
+  let board = Array(9).fill(0);
+  let gameOver = false;
+  let humanTurn = true;
+  let mode = 'nn';
+  let showDebug = false;
+  let scores = { human: 0, ai: 0, draw: 0 };
+
+  const WINS = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  // ─── UI helpers ──────────────────────────────────────────
+  function setStatus(text, type) {
+    document.getElementById('status-text').textContent = text;
+    const dot = document.getElementById('sdot');
+    dot.className = 'sdot';
+    if (type === 'ai')   dot.classList.add('ai');
+    if (type === 'win')  dot.classList.add('win');
+    if (type === 'hwon') dot.classList.add('hwon');
+    if (type === 'draw') dot.classList.add('draw');
+  }
+
+  function enableBoard(on) {
+    document.querySelectorAll('.cell').forEach(c => {
+      c.style.pointerEvents = on ? 'auto' : 'none';
+    });
+  }
+
+  function renderBoard() {
+    document.querySelectorAll('.cell').forEach((c, i) => {
+      c.textContent = board[i] === 1 ? 'X' : board[i] === -1 ? 'O' : '';
+      c.className = 'cell'
+        + (board[i] !== 0 ? ' taken' : '')
+        + (board[i] ===  1 ? ' x' : '')
+        + (board[i] === -1 ? ' o' : '');
+    });
+  }
+
+  function highlightWin(line) {
+    if (!line) return;
+    const cells = document.querySelectorAll('.cell');
+    line.forEach(i => cells[i].classList.add('winning'));
+  }
+
+  function setMode(m) {
+    mode = m;
+    ['nn','rand'].forEach(id => {
+      const el = document.getElementById('mode-' + id);
+      if (el) el.className = 'toggle-opt' + (mode === (id === 'rand' ? 'random' : id) ? ' active' : '');
+    });
+  }
+
+  function toggleDebug() {
+    showDebug = !showDebug;
+    document.getElementById('prob-debug').className = showDebug ? 'visible' : '';
+    document.getElementById('mode-debug').className = 'toggle-opt' + (showDebug ? ' active' : '');
+  }
+
+  function showProbs(probs) {
+    if (!probs) return;
+    for (let i = 0; i < 9; i++) {
+      const el = document.getElementById('p' + i);
+      if (el) el.textContent = (probs[i] * 100).toFixed(1) + '%';
+    }
+  }
+
+  // ─── Lógica de juego ─────────────────────────────────────
+  function checkWinner() {
+    for (const [a,b,c] of WINS) {
+      if (board[a] !== 0 && board[a] === board[b] && board[b] === board[c]) {
+        return { winner: board[a], line: [a,b,c] };
+      }
+    }
+    if (board.every(v => v !== 0)) return { winner: 0, draw: true };
+    return null;
+  }
+
+  function getAIMove() {
+    const empty = board.map((v,i) => v === 0 ? i : -1).filter(i => i >= 0);
+    if (empty.length === 0) return { move: -1, probs: null };
+
+    if (!model || mode === 'random') {
+      return { move: empty[Math.floor(Math.random() * empty.length)], probs: null };
+    }
+
+    return tf.tidy(() => {
+      const input = tf.tensor2d([board.map(Number)], [1, 9]);
+      const probTensor = model.predict(input);
+      const probs = Array.from(probTensor.dataSync());
+
+      // Seleccionar casilla libre con mayor probabilidad
+      let bestIdx = -1, bestProb = -1;
+      empty.forEach(i => {
+        if (probs[i] > bestProb) { bestProb = probs[i]; bestIdx = i; }
+      });
+      return { move: bestIdx, probs };
+    });
+  }
+
+  function humanMove(i) {
+    if (!humanTurn || gameOver || board[i] !== 0) return;
+    board[i] = 1;
+    renderBoard();
+    const result = checkWinner();
+    if (result) { endGame(result); return; }
+    humanTurn = false;
+    setStatus('La IA está pensando...', 'ai');
+    enableBoard(false);
+    setTimeout(aiMove, 600);
+  }
+
+  function aiMove() {
+    const { move, probs } = getAIMove();
+    if (move === -1) return;
+    board[move] = -1;
+    renderBoard();
+    if (showDebug) showProbs(probs);
+    const result = checkWinner();
+    if (result) { endGame(result); return; }
+    humanTurn = true;
+    enableBoard(true);
+    setStatus('¡Tu turno! Hacé click en una casilla.', '');
+  }
+
+  function endGame(result) {
+    gameOver = true;
+    enableBoard(false);
+    if (result.draw) {
+      scores.draw++;
+      setStatus('¡Empate! Fue un partido parejo.', 'draw');
+    } else if (result.winner === 1) {
+      scores.human++;
+      setStatus('¡Ganaste! Le ganaste a la IA.', 'hwon');
+      highlightWin(result.line);
+    } else {
+      scores.ai++;
+      setStatus('¡La IA ganó! ¿Revancha?', 'win');
+      highlightWin(result.line);
+    }
+    document.getElementById('score-human').textContent = scores.human;
+    document.getElementById('score-ai').textContent    = scores.ai;
+    document.getElementById('score-draw').textContent  = scores.draw;
+  }
+
+  function resetGame() {
+    board = Array(9).fill(0);
+    gameOver = false;
+    humanTurn = true;
+    renderBoard();
+    enableBoard(true);
+    setStatus('¡Tu turno! Hacé click en una casilla.', '');
+  }
+
+  function aiFirst() {
+    resetGame();
+    humanTurn = false;
+    setStatus('La IA empieza...', 'ai');
+    enableBoard(false);
+    setTimeout(aiMove, 400);
+  }
+
+  // ─── Carga del modelo ────────────────────────────────────
+  async function loadModel() {
+    const mdot  = document.getElementById('mdot');
+    const label = document.getElementById('model-label');
+
+    try {
+      await tf.ready();
+      model = await tf.loadLayersModel('model/ttt_model.json');
+      mdot.className = 'mdot ok';
+      label.textContent = 'Modelo entrenado cargado correctamente · TF.js ' + tf.version.tfjs;
+      setStatus('¡Tu turno! Hacé click en una casilla.', '');
+      enableBoard(true);
+    } catch (e) {
+      // Si no encuentra los pesos, construye arquitectura con pesos aleatorios
+      console.warn('No se pudo cargar el modelo completo, usando pesos aleatorios:', e);
+      model = tf.sequential();
+      model.add(tf.layers.dense({ units: 64, activation: 'relu', inputShape: [9] }));
+      model.add(tf.layers.dense({ units: 64, activation: 'relu' }));
+      model.add(tf.layers.dense({ units: 9,  activation: 'softmax' }));
+      mdot.className = 'mdot err';
+      label.textContent = '⚠ No se encontró model/ttt_model.json — usando pesos aleatorios. Poné ttt_model.json y ttt_model.weights.bin en la carpeta /model/.';
+      setStatus('Modelo con pesos aleatorios (ver instrucciones).', '');
+      enableBoard(true);
+    }
+  }
+
+  loadModel();
+</script>
+</body>
+</html>

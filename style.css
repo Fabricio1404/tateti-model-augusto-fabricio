@@ -1,0 +1,261 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #0f0f13;
+  color: #e8e6f0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.container {
+  max-width: 460px;
+  width: 100%;
+}
+
+/* ── Header ─────────────────────────────────────── */
+header {
+  margin-bottom: 2rem;
+}
+
+h1 {
+  font-family: 'Courier New', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #c8c2ff;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #7a7890;
+  margin-top: 4px;
+}
+
+/* ── Marcador ────────────────────────────────────── */
+.scores {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.score-card {
+  background: #1a1a24;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.score-label {
+  font-size: 11px;
+  color: #7a7890;
+  margin-bottom: 4px;
+}
+
+.score-val {
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #e8e6f0;
+}
+
+.score-val.purple { color: #a99eff; }
+.score-val.teal   { color: #5dcaa5; }
+
+/* ── Selector de modo ────────────────────────────── */
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+  font-size: 13px;
+  color: #7a7890;
+}
+
+.toggle-opt {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid #2a2a3a;
+  background: transparent;
+  color: #7a7890;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toggle-opt.active {
+  background: #534AB7;
+  border-color: #534AB7;
+  color: #eeedfe;
+}
+
+/* ── Barra de estado ─────────────────────────────── */
+.status-bar {
+  background: #1a1a24;
+  border: 1px solid #2a2a3a;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.25rem;
+  min-height: 44px;
+}
+
+.sdot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #EF9F27;
+}
+
+.sdot.ai   { background: #5dcaa5; }
+.sdot.win  { background: #e24b4a; animation: pulse 1.2s infinite; }
+.sdot.hwon { background: #a99eff; animation: pulse 1.2s infinite; }
+.sdot.draw { background: #888780; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Tablero ─────────────────────────────────────── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 1.25rem;
+}
+
+.cell {
+  aspect-ratio: 1;
+  background: #1a1a24;
+  border: 1px solid #2a2a3a;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  font-size: 36px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, transform 0.1s, border-color 0.12s;
+  user-select: none;
+}
+
+.cell:hover:not(.taken) {
+  background: #252535;
+  border-color: #534AB7;
+  transform: scale(1.04);
+}
+
+.cell.taken  { cursor: default; }
+.cell.x      { color: #a99eff; }
+.cell.o      { color: #5dcaa5; }
+.cell.winning {
+  background: #1e1e35;
+  border-color: #534AB7;
+}
+
+/* ── Botones ─────────────────────────────────────── */
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #2a2a3a;
+  background: #1a1a24;
+  color: #e8e6f0;
+  transition: background 0.12s;
+}
+
+.btn:hover { background: #252535; }
+
+.btn-primary {
+  background: #534AB7;
+  border-color: #534AB7;
+  color: #eeedfe;
+}
+
+.btn-primary:hover {
+  background: #3C3489;
+  border-color: #3C3489;
+}
+
+/* ── Estado del modelo ───────────────────────────── */
+.model-status {
+  font-size: 12px;
+  color: #555468;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #13131c;
+  border-radius: 8px;
+  border: 1px solid #1e1e2c;
+}
+
+.mdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #EF9F27;
+  animation: pulse 1s infinite;
+}
+
+.mdot.ok  { background: #5dcaa5; animation: none; }
+.mdot.err { background: #e24b4a; animation: none; }
+
+/* ── Panel de probabilidades (debug) ─────────────── */
+#prob-debug {
+  margin-top: 1rem;
+  display: none;
+}
+
+#prob-debug.visible { display: block; }
+
+.prob-title {
+  font-size: 11px;
+  color: #555468;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.prob-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.prob-cell {
+  background: #13131c;
+  border: 1px solid #1e1e2c;
+  border-radius: 6px;
+  padding: 5px;
+  text-align: center;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: #5dcaa5;
+}
